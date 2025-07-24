@@ -2,7 +2,12 @@ import os
 import io
 import traceback
 import sqlite3
-import pandas as pd
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    print("WARNING: Pandas not available. Some analytics features will be limited.")
 import requests
 from flask import Flask, jsonify, render_template, request, redirect, url_for, session, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -266,17 +271,69 @@ def api_get_data():
         return jsonify({"error": "Authentication required."}), 401
     try:
         conn = get_db_conn()
-        df = pd.read_sql_query("SELECT * FROM applications", conn)
-        if df.empty:
+        
+        if PANDAS_AVAILABLE:
+            df = pd.read_sql_query("SELECT * FROM applications", conn)
+            if df.empty:
+                conn.close()
+                return jsonify({"kpis": {}, "charts": {}, "table_data": [], "all_columns": [], "default_columns": [], "filters": {}})
+
+            df['email'] = df['email'].astype(str).str.lower().fillna('')
+            statuses_df = pd.read_sql_query("SELECT lower(email) as email, status FROM statuses", conn)
             conn.close()
-            return jsonify({"kpis": {}, "charts": {}, "table_data": [], "all_columns": [], "default_columns": [], "filters": {}})
 
-        df['email'] = df['email'].astype(str).str.lower().fillna('')
-        statuses_df = pd.read_sql_query("SELECT lower(email) as email, status FROM statuses", conn)
-        conn.close()
-
-        status_map = {row['email']: row['status'] for _, row in statuses_df.iterrows()} if not statuses_df.empty else {}
-        df['Status'] = df.apply(lambda row: status_map.get(row.get('email', '').lower(), 'Applied'), axis=1)
+            status_map = {row['email']: row['status'] for _, row in statuses_df.iterrows()} if not statuses_df.empty else {}
+            df['Status'] = df.apply(lambda row: status_map.get(row.get('email', '').lower(), 'Applied'), axis=1)
+        else:
+            # Fallback without pandas
+            applications = conn.execute("SELECT * FROM applications").fetchall()
+            if not applications:
+                conn.close()
+                return jsonify({"kpis": {}, "charts": {}, "table_data": [], "all_columns": [], "default_columns": [], "filters": {}})
+            
+            statuses = conn.execute("SELECT lower(email) as email, status FROM statuses").fetchall()
+            conn.close()
+            
+            status_map = {row['email']: row['status'] for row in statuses}
+            
+            # Convert to list of dicts
+            df_data = []
+            for row in applications:
+                row_dict = dict(row)
+                email = str(row_dict.get('email', '')).lower()
+                row_dict['Status'] = status_map.get(email, 'Applied')
+                df_data.append(row_dict)
+            
+            # Create a simple object to mimic pandas DataFrame behavior
+            class SimpleDataFrame:
+                def __init__(self, data):
+                    self.data = data
+                    self.columns = list(data[0].keys()) if data else []
+                
+                def __len__(self):
+                    return len(self.data)
+                
+                def to_dict(self, orient='records'):
+                    return self.data
+                
+                def fillna(self, value):
+                    for row in self.data:
+                        for key in row:
+                            if row[key] is None:
+                                row[key] = value
+                    return self
+                
+                def __getitem__(self, key):
+                    if isinstance(key, str):
+                        return [row.get(key) for row in self.data]
+                    return self
+                
+                def value_counts(self):
+                    # This is a method on a series, so self.data should be a list
+                    from collections import Counter
+                    return Counter(self.data)
+            
+            df = SimpleDataFrame(df_data)
 
         COLUMNS = {
             'STATUS': 'Status', 'GENDER': 'gender', 'DATE': 'submission_timestamp', 'NAME': 'name',
@@ -286,22 +343,40 @@ def api_get_data():
         }
         
         filters_applied = {key: request.args.get(key) for key in request.args}
-        if COLUMNS['DATE'] in df.columns:
-            df[COLUMNS['DATE']] = pd.to_datetime(df[COLUMNS['DATE']], errors='coerce')
-            if filters_applied.get('start_date'):
-                df = df[df[COLUMNS['DATE']] >= pd.to_datetime(filters_applied['start_date'])]
-            if filters_applied.get('end_date'):
-                df = df[df[COLUMNS['DATE']] <= pd.to_datetime(filters_applied['end_date'])]
-
-        def apply_filter(dataframe, col_name, value):
-            if value and value != 'all' and col_name in dataframe.columns:
-                return dataframe[dataframe[col_name].astype(str) == value]
-            return dataframe
-
-        for key, col in [('location', COLUMNS['LOCATION']), ('post', COLUMNS['POST']), ('qualification', COLUMNS['QUALIFICATION']), ('business_entity', COLUMNS['COMPANY']), ('course', COLUMNS['COURSE']), ('college', COLUMNS['COLLEGE'])]:
-            df = apply_filter(df, col, filters_applied.get(key))
         
-        status_counts = df[COLUMNS['STATUS']].value_counts()
+        if PANDAS_AVAILABLE:
+            if COLUMNS['DATE'] in df.columns:
+                df[COLUMNS['DATE']] = pd.to_datetime(df[COLUMNS['DATE']], errors='coerce')
+                if filters_applied.get('start_date'):
+                    df = df[df[COLUMNS['DATE']] >= pd.to_datetime(filters_applied['start_date'])]
+                if filters_applied.get('end_date'):
+                    df = df[df[COLUMNS['DATE']] <= pd.to_datetime(filters_applied['end_date'])]
+
+            def apply_filter(dataframe, col_name, value):
+                if value and value != 'all' and col_name in dataframe.columns:
+                    return dataframe[dataframe[col_name].astype(str) == value]
+                return dataframe
+
+            for key, col in [('location', COLUMNS['LOCATION']), ('post', COLUMNS['POST']), ('qualification', COLUMNS['QUALIFICATION']), ('business_entity', COLUMNS['COMPANY']), ('course', COLUMNS['COURSE']), ('college', COLUMNS['COLLEGE'])]:
+                df = apply_filter(df, col, filters_applied.get(key))
+            
+            status_counts = df[COLUMNS['STATUS']].value_counts()
+        else:
+            # Simple filtering without pandas
+            filtered_data = df.data.copy()
+            
+            # Apply filters
+            for key, col in [('location', COLUMNS['LOCATION']), ('post', COLUMNS['POST']), ('qualification', COLUMNS['QUALIFICATION']), ('business_entity', COLUMNS['COMPANY']), ('course', COLUMNS['COURSE']), ('college', COLUMNS['COLLEGE'])]:
+                filter_value = filters_applied.get(key)
+                if filter_value and filter_value != 'all':
+                    filtered_data = [row for row in filtered_data if str(row.get(col, '')) == filter_value]
+            
+            df.data = filtered_data
+            
+            # Count statuses
+            from collections import Counter
+            status_list = [row.get(COLUMNS['STATUS'], 'Applied') for row in df.data]
+            status_counts = Counter(status_list)
         kpis = {
             'applications': len(df), 'shortlisted': int(status_counts.get('Shortlisted', 0)),
             'interviewed': int(status_counts.get('Interviewed', 0)), 'offered': int(status_counts.get('Offered', 0)),
@@ -312,26 +387,58 @@ def api_get_data():
         # Rejection rate: rejected / total applications
         kpis['rejection_rate'] = round((kpis['rejected'] / len(df)) * 100 if len(df) > 0 else 0, 2)
 
-        charts = {
-            'apps_per_company': df[COLUMNS['COMPANY']].value_counts().to_dict() if COLUMNS['COMPANY'] in df.columns else {},
-            'apps_per_college': df[COLUMNS['COLLEGE']].value_counts().to_dict() if COLUMNS['COLLEGE'] in df.columns else {},
-            'gender_diversity': df[COLUMNS['GENDER']].value_counts().to_dict() if COLUMNS['GENDER'] in df.columns else {},
-            'recruitment_funnel': {'labels': ['Applications', 'Shortlisted', 'Interviewed', 'Offered', 'Hired'], 'data': [kpis['applications'], kpis['shortlisted'], kpis['interviewed'], kpis['offered'], kpis['hired']]}
-        }
+        if PANDAS_AVAILABLE:
+            charts = {
+                'apps_per_company': df[COLUMNS['COMPANY']].value_counts().to_dict() if COLUMNS['COMPANY'] in df.columns else {},
+                'apps_per_college': df[COLUMNS['COLLEGE']].value_counts().to_dict() if COLUMNS['COLLEGE'] in df.columns else {},
+                'gender_diversity': df[COLUMNS['GENDER']].value_counts().to_dict() if COLUMNS['GENDER'] in df.columns else {},
+                'recruitment_funnel': {'labels': ['Applications', 'Shortlisted', 'Interviewed', 'Offered', 'Hired'], 'data': [kpis['applications'], kpis['shortlisted'], kpis['interviewed'], kpis['offered'], kpis['hired']]}
+            }
 
-        for col in df.columns:
-            if pd.api.types.is_datetime64_any_dtype(df[col]):
-                df[col] = df[col].dt.strftime('%Y-%m-%d %H:%M:%S')
-        df.fillna('', inplace=True)
-        all_columns = df.columns.tolist()
-        if 'name' in all_columns:
-            all_columns.insert(0, all_columns.pop(all_columns.index('name')))
-        
-        default_columns = [col for col in ['name', 'email', 'post_applying_for', 'qualification_grad_school', 'Status', 'resume_path'] if col in all_columns]
-        table_data = df.to_dict(orient='records')
+            for col in df.columns:
+                if pd.api.types.is_datetime64_any_dtype(df[col]):
+                    df[col] = df[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            df.fillna('', inplace=True)
+            all_columns = df.columns.tolist()
+            if 'name' in all_columns:
+                all_columns.insert(0, all_columns.pop(all_columns.index('name')))
+            
+            default_columns = [col for col in ['name', 'email', 'post_applying_for', 'qualification_grad_school', 'Status', 'resume_path'] if col in all_columns]
+            table_data = df.to_dict(orient='records')
 
-        def get_unique_values(col_name):
-            return sorted(df[col_name].dropna().unique().tolist()) if col_name in df.columns else []
+            def get_unique_values(col_name):
+                return sorted(df[col_name].dropna().unique().tolist()) if col_name in df.columns else []
+        else:
+            # Simple charts without pandas
+            from collections import Counter
+            
+            def count_column_values(column_name):
+                if column_name in df.columns:
+                    values = [row.get(column_name) for row in df.data if row.get(column_name)]
+                    return dict(Counter(values))
+                return {}
+            
+            charts = {
+                'apps_per_company': count_column_values(COLUMNS['COMPANY']),
+                'apps_per_college': count_column_values(COLUMNS['COLLEGE']),
+                'gender_diversity': count_column_values(COLUMNS['GENDER']),
+                'recruitment_funnel': {'labels': ['Applications', 'Shortlisted', 'Interviewed', 'Offered', 'Hired'], 'data': [kpis['applications'], kpis['shortlisted'], kpis['interviewed'], kpis['offered'], kpis['hired']]}
+            }
+
+            # Clean up data
+            df.fillna('')
+            all_columns = df.columns
+            if 'name' in all_columns:
+                all_columns = ['name'] + [col for col in all_columns if col != 'name']
+            
+            default_columns = [col for col in ['name', 'email', 'post_applying_for', 'qualification_grad_school', 'Status', 'resume_path'] if col in all_columns]
+            table_data = df.to_dict(orient='records')
+
+            def get_unique_values(col_name):
+                if col_name in df.columns:
+                    values = [row.get(col_name) for row in df.data if row.get(col_name)]
+                    return sorted(list(set(values)))
+                return []
         
         filters = {
             'locations': get_unique_values(COLUMNS['LOCATION']), 'posts': get_unique_values(COLUMNS['POST']),
