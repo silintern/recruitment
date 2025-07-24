@@ -1978,11 +1978,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const activeTab = document.querySelector('.form-config-tab.active');
         if (!activeTab && tabs.length > 0) {
             tabs[0].classList.add('active');
+            // Show the first tab content
+            const firstTabId = tabs[0].id.replace('tab-', 'tab-content-');
+            const firstContent = document.getElementById(firstTabId);
+            if (firstContent) {
+                firstContent.classList.remove('hidden');
+                firstContent.style.opacity = '1';
+            }
         }
 
         tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
                 console.log('Tab clicked:', tab.id);
+                
+                // Prevent multiple rapid clicks
+                if (tab.classList.contains('switching')) return;
+                tab.classList.add('switching');
                 
                 // Remove active class from all tabs
                 tabs.forEach(t => {
@@ -1992,15 +2004,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Add active class to clicked tab
                 tab.classList.add('active');
 
-                // Hide all tab contents with animation
+                // Hide all tab contents with smooth animation
                 contents.forEach(content => {
+                    content.style.transition = 'opacity 0.2s ease-in-out';
                     content.style.opacity = '0';
                     setTimeout(() => {
                         content.classList.add('hidden');
-                    }, 150);
+                    }, 200);
                 });
 
-                // Show corresponding content with animation
+                // Show corresponding content with smooth animation
                 const tabId = tab.id.replace('tab-', 'tab-content-');
                 const targetContent = document.getElementById(tabId);
                 console.log('Switching to tab content:', tabId);
@@ -2008,8 +2021,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (targetContent) {
                     setTimeout(() => {
                         targetContent.classList.remove('hidden');
+                        targetContent.style.transition = 'opacity 0.3s ease-in-out';
                         targetContent.style.opacity = '0';
-                        setTimeout(() => {
+                        
+                        requestAnimationFrame(() => {
                             targetContent.style.opacity = '1';
                             
                             // Initialize drag and drop when sections tab is shown
@@ -2018,11 +2033,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                 setTimeout(() => {
                                     initializeSectionDragAndDrop();
                                     initializeDragAndDrop();
-                                }, 200);
+                                }, 300);
                             }
-                        }, 50);
-                    }, 150);
+                            
+                            // Remove switching class after transition
+                            setTimeout(() => {
+                                tab.classList.remove('switching');
+                            }, 400);
+                        });
+                    }, 250);
                 }
+            });
             });
         });
     }
