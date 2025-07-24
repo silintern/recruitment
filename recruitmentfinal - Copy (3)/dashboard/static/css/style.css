@@ -329,6 +329,8 @@ input:checked + .toggle-switch::after {
 .sortable-section-item {
     transition: all 0.2s ease;
     user-select: none;
+    position: relative;
+    cursor: move;
 }
 
 .sortable-section-item:hover {
@@ -341,6 +343,16 @@ input:checked + .toggle-switch::after {
     transform: rotate(2deg) scale(1.02);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     z-index: 1000;
+    border-color: #3b82f6;
+}
+
+/* Drag over effects for sections */
+.sortable-section-item.drag-over-top {
+    border-top: 3px solid #3b82f6;
+}
+
+.sortable-section-item.drag-over-bottom {
+    border-bottom: 3px solid #3b82f6;
 }
 
 .sortable-section-placeholder {
@@ -440,6 +452,7 @@ input:checked + .toggle-switch::after {
     cursor: move;
     transition: all 0.2s ease;
     user-select: none;
+    position: relative;
 }
 
 .sortable-field-item:hover {
@@ -451,16 +464,33 @@ input:checked + .toggle-switch::after {
 
 .sortable-field-item.dragging {
     opacity: 0.5;
-    transform: rotate(5deg);
+    transform: rotate(2deg) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    border-color: #3b82f6;
 }
 
 .sortable-field-item .drag-handle {
     color: #9ca3af;
     cursor: grab;
+    transition: color 0.2s ease;
+}
+
+.sortable-field-item:hover .drag-handle {
+    color: #6366f1;
 }
 
 .sortable-field-item .drag-handle:active {
     cursor: grabbing;
+}
+
+/* Drag over effects */
+.sortable-field-item.drag-over-top {
+    border-top: 3px solid #3b82f6;
+}
+
+.sortable-field-item.drag-over-bottom {
+    border-bottom: 3px solid #3b82f6;
 }
 
 /* Section management styles */
