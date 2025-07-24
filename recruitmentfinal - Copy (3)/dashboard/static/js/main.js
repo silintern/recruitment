@@ -3,6 +3,79 @@ document.addEventListener('DOMContentLoaded', function() {
     const charts = {};
     let currentTableData = [];
 
+    // Mobile menu functionality
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+    const sidebar = document.querySelector('aside');
+
+    if (mobileMenuBtn && mobileMenuOverlay && sidebar) {
+        mobileMenuBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('mobile-open');
+            mobileMenuOverlay.classList.toggle('active');
+        });
+
+        mobileMenuOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('mobile-open');
+            mobileMenuOverlay.classList.remove('active');
+        });
+    }
+
+    // Notification system
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas ${getNotificationIcon(type)} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="ml-4 text-gray-400 hover:text-gray-600" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => notification.classList.add('show'), 100);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, duration);
+    }
+
+    function getNotificationIcon(type) {
+        switch(type) {
+            case 'success': return 'fa-check-circle';
+            case 'error': return 'fa-exclamation-circle';
+            case 'warning': return 'fa-exclamation-triangle';
+            default: return 'fa-info-circle';
+        }
+    }
+
+    // Enhanced button loading states
+    function setButtonLoading(button, loading) {
+        if (loading) {
+            button.classList.add('btn-loading');
+            button.disabled = true;
+        } else {
+            button.classList.remove('btn-loading');
+            button.disabled = false;
+        }
+    }
+
+    // Refresh KPI button functionality
+    const refreshKpiBtn = document.getElementById('refresh-kpi-btn');
+    if (refreshKpiBtn) {
+        refreshKpiBtn.addEventListener('click', function() {
+            setButtonLoading(this, true);
+            fetchDataAndRender().finally(() => {
+                setButtonLoading(this, false);
+                showNotification('Metrics refreshed successfully', 'success');
+            });
+        });
+    }
+
     // --- Main Application Logic ---
 
     /**
@@ -44,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Dashboard Render Error:', error);
             showError(`Failed to load dashboard data. ${error.message}`);
+            showNotification(`Error loading dashboard: ${error.message}`, 'error');
         } finally {
             showLoading(false);
         }
