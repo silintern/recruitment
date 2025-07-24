@@ -1859,6 +1859,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         console.log('Saving section order:', sectionOrder);
+        console.log('Number of sections to reorder:', sectionOrder.length);
         
         try {
             const button = document.getElementById('save-section-order');
@@ -1938,7 +1939,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Section drag started:', item.dataset.sectionName);
         item.classList.add('dragging');
-        item.style.opacity = '0.5';
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', item.dataset.sectionName);
     }
@@ -1976,7 +1976,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const item = e.target.closest('.sortable-section-item');
         if (item) {
             item.classList.remove('dragging');
-            item.style.opacity = '1';
         }
         
         // Remove drag-over class from all containers
