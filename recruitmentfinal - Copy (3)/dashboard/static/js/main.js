@@ -813,9 +813,20 @@ document.addEventListener('DOMContentLoaded', function() {
             populateSectionsList(currentSections);
             populateExistingSections(currentSections);
             populateSortableFields(currentFields);
+            populateSortableSections(currentSections);
             populateValidationsTab(currentFields);
             
             document.getElementById('form-config-modal').classList.remove('hidden');
+            
+            // Check if sections tab is active and initialize drag and drop
+            const sectionsTab = document.getElementById('tab-sections');
+            if (sectionsTab && sectionsTab.classList.contains('active')) {
+                setTimeout(() => {
+                    console.log('Sections tab is active on modal open, initializing drag and drop');
+                    initializeSectionDragAndDrop();
+                    initializeDragAndDrop();
+                }, 200);
+            }
         } catch (error) {
             alert(`Could not load form configuration: ${error.message}`);
         }
@@ -1004,10 +1015,8 @@ document.addEventListener('DOMContentLoaded', function() {
             sortableContainer.appendChild(div);
         });
 
-        // Initialize drag and drop for sections with a small delay to ensure DOM is ready
-        setTimeout(() => {
-            initializeSectionDragAndDrop();
-        }, 100);
+        // Don't initialize drag and drop here since the tab might be hidden
+        // It will be initialized when the sections tab is activated
     }
 
     function populateExistingSections(sections = []) {
@@ -1056,10 +1065,8 @@ document.addEventListener('DOMContentLoaded', function() {
             sortableContainer.appendChild(div);
         });
 
-        // Add drag and drop functionality with a small delay to ensure DOM is ready
-        setTimeout(() => {
-            initializeDragAndDrop();
-        }, 100);
+        // Don't initialize drag and drop here since the tab might be hidden
+        // It will be initialized when the sections tab is activated
     }
 
     function populateValidationsTab(fields = []) {
@@ -1727,8 +1734,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const tabs = document.querySelectorAll('.form-config-tab');
         const contents = document.querySelectorAll('.tab-content');
 
+        // Set default active tab if none is active
+        const activeTab = document.querySelector('.form-config-tab.active');
+        if (!activeTab && tabs.length > 0) {
+            tabs[0].classList.add('active');
+        }
+
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
+                console.log('Tab clicked:', tab.id);
+                
                 // Remove active class from all tabs
                 tabs.forEach(t => {
                     t.classList.remove('active');
@@ -1748,12 +1763,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show corresponding content with animation
                 const tabId = tab.id.replace('tab-', 'tab-content-');
                 const targetContent = document.getElementById(tabId);
+                console.log('Switching to tab content:', tabId);
+                
                 if (targetContent) {
                     setTimeout(() => {
                         targetContent.classList.remove('hidden');
                         targetContent.style.opacity = '0';
                         setTimeout(() => {
                             targetContent.style.opacity = '1';
+                            
+                            // Initialize drag and drop when sections tab is shown
+                            if (tabId === 'tab-content-sections') {
+                                console.log('Sections tab activated, initializing drag and drop');
+                                setTimeout(() => {
+                                    initializeSectionDragAndDrop();
+                                    initializeDragAndDrop();
+                                }, 200);
+                            }
                         }, 50);
                     }, 150);
                 }
@@ -1863,6 +1889,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add section management event listeners
         document.getElementById('create-section-btn')?.addEventListener('click', handleCreateSection);
         document.getElementById('save-section-order')?.addEventListener('click', handleSaveSectionOrder);
+        
+        // Add debug buttons for manual drag and drop initialization
+        document.getElementById('init-section-drag')?.addEventListener('click', () => {
+            console.log('Manual section drag initialization triggered');
+            initializeSectionDragAndDrop();
+        });
+        document.getElementById('init-field-drag')?.addEventListener('click', () => {
+            console.log('Manual field drag initialization triggered');
+            initializeDragAndDrop();
+        });
         
         // Add keyboard support for section creation
         document.getElementById('new-section-name')?.addEventListener('keypress', (e) => {

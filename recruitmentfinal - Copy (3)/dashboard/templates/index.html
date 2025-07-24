@@ -446,9 +446,14 @@
                                 <div class="p-6">
                                     <p class="text-sm text-gray-600 mb-4">Drag sections to reorder them on the form</p>
                                     <div id="sortable-sections" class="space-y-2 mb-4 max-h-60 overflow-y-auto"></div>
-                                    <button id="save-section-order" class="btn-primary text-sm">
-                                        <i class="fas fa-save mr-2"></i>Save Section Order
-                                    </button>
+                                    <div class="flex space-x-2">
+                                        <button id="save-section-order" class="btn-primary text-sm">
+                                            <i class="fas fa-save mr-2"></i>Save Section Order
+                                        </button>
+                                        <button id="init-section-drag" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm">
+                                            <i class="fas fa-sync mr-1"></i>Init Drag
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -465,9 +470,14 @@
                                 <div class="p-6">
                                     <p class="text-sm text-gray-600 mb-4">Drag fields to reorder them within sections</p>
                                     <div id="sortable-fields" class="space-y-2 max-h-60 overflow-y-auto mb-4"></div>
-                                    <button id="save-field-order" class="btn-primary text-sm">
-                                        <i class="fas fa-save mr-2"></i>Save Field Order
-                                    </button>
+                                    <div class="flex space-x-2">
+                                        <button id="save-field-order" class="btn-primary text-sm">
+                                            <i class="fas fa-save mr-2"></i>Save Field Order
+                                        </button>
+                                        <button id="init-field-drag" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm">
+                                            <i class="fas fa-sync mr-1"></i>Init Drag
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
