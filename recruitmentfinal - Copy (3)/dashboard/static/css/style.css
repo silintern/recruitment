@@ -433,6 +433,63 @@ canvas {
     border-radius: 0.5rem;
 }
 
+/* Chart container sizing */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+}
+
+.chart-container.loading::before {
+    content: 'Loading chart...';
+    position: absolute;
+    color: #64748b;
+    font-size: 0.875rem;
+    z-index: 1;
+}
+
+.chart-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Specific chart heights */
+#appsPerCompanyChart,
+#appsPerCollegeChart,
+#genderDiversityChart,
+#recruitmentFunnelChart {
+    max-height: 300px;
+    width: 100% !important;
+    height: 300px !important;
+}
+
+/* Chart parent containers */
+.bg-white.p-6.rounded-lg.shadow-sm.border.border-gray-200 {
+    min-height: 400px;
+}
+
+/* Responsive chart heights */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px;
+    }
+    
+    #appsPerCompanyChart,
+    #appsPerCollegeChart,
+    #genderDiversityChart,
+    #recruitmentFunnelChart {
+        max-height: 250px;
+    }
+}
+
 /* Print styles */
 @media print {
     body {

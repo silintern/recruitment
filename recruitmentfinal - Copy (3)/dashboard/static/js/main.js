@@ -76,6 +76,40 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Chart resize observer to handle dynamic sizing
+    function initializeChartResizeObserver() {
+        if (typeof ResizeObserver !== 'undefined') {
+            const chartContainers = document.querySelectorAll('.chart-container');
+            const resizeObserver = new ResizeObserver(entries => {
+                entries.forEach(entry => {
+                    const canvas = entry.target.querySelector('canvas');
+                    if (canvas && charts[canvas.id]) {
+                        // Small delay to ensure container has resized
+                        setTimeout(() => {
+                            charts[canvas.id].resize();
+                        }, 100);
+                    }
+                });
+            });
+
+            chartContainers.forEach(container => {
+                resizeObserver.observe(container);
+            });
+        }
+    }
+
+    // Initialize chart sizing after DOM is ready
+    function ensureChartSizing() {
+        // Wait for layout to stabilize
+        setTimeout(() => {
+            Object.keys(charts).forEach(chartId => {
+                if (charts[chartId]) {
+                    charts[chartId].resize();
+                }
+            });
+        }, 500);
+    }
+
     // --- Main Application Logic ---
 
     /**
@@ -113,6 +147,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Repopulate column selector every time to reflect schema changes
             populateColumnSelector(data.all_columns, data.default_columns);
+            
+            // Ensure proper chart sizing after data load
+            ensureChartSizing();
+            
+            // Initialize resize observer if not already done
+            if (!window.chartResizeObserverInitialized) {
+                initializeChartResizeObserver();
+                window.chartResizeObserverInitialized = true;
+            }
 
         } catch (error) {
             console.error('Dashboard Render Error:', error);
@@ -276,11 +319,82 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateAllCharts(chartData = {}) {
+        // Add loading state to all chart containers
+        document.querySelectorAll('.chart-container').forEach(container => {
+            container.classList.add('loading');
+        });
         const chartConfigs = {
-            appsPerCompanyChart: { type: 'bar', label: 'Apps per Company', data: chartData.apps_per_company, options: {} },
-            appsPerCollegeChart: { type: 'bar', label: 'Apps per College', data: chartData.apps_per_college, options: {} },
-            genderDiversityChart: { type: 'pie', label: 'Gender Diversity', data: chartData.gender_diversity, options: {} },
-            recruitmentFunnelChart: { type: 'funnel', label: 'Recruitment Funnel', data: chartData.recruitment_funnel, options: {} }
+            appsPerCompanyChart: { 
+                type: 'bar', 
+                label: 'Apps per Company', 
+                data: chartData.apps_per_company, 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: 2,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            },
+            appsPerCollegeChart: { 
+                type: 'bar', 
+                label: 'Apps per College', 
+                data: chartData.apps_per_college, 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: 2,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            },
+            genderDiversityChart: { 
+                type: 'pie', 
+                label: 'Gender Diversity', 
+                data: chartData.gender_diversity, 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: 1,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            },
+            recruitmentFunnelChart: { 
+                type: 'funnel', 
+                label: 'Recruitment Funnel', 
+                data: chartData.recruitment_funnel, 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: 1.5
+                }
+            }
         };
 
         if (window.ChartDataLabels) {
@@ -317,20 +431,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (chartInstance) {
                     chartInstance.destroy();
                 }
-                const ctx = document.getElementById(canvasId)?.getContext('2d');
-                if (!ctx) continue;
+                const canvas = document.getElementById(canvasId);
+                const ctx = canvas?.getContext('2d');
+                if (!ctx || !canvas) continue;
+                
+                // Ensure canvas has proper dimensions before creating chart
+                const container = canvas.parentElement;
+                                 if (container && container.classList.contains('chart-container')) {
+                     canvas.style.width = '100%';
+                     canvas.style.height = '100%';
+                     container.classList.remove('loading');
+                 }
 
                 charts[canvasId] = new Chart(ctx, {
                     type: 'bar',
                     data: newChartData,
                     options: {
-                        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                        scales: { x: { stacked: true, grid: { display: false }, ticks: { display: false } }, y: { stacked: true, grid: { display: false } } },
+                        indexAxis: 'y', 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        aspectRatio: config.options.aspectRatio || 1.5,
+                        scales: { 
+                            x: { 
+                                stacked: true, 
+                                grid: { display: false }, 
+                                ticks: { display: false } 
+                            }, 
+                            y: { 
+                                stacked: true, 
+                                grid: { display: false } 
+                            } 
+                        },
                         plugins: {
-                            legend: { display: false }, title: { display: true, text: 'Recruitment Funnel' },
+                            legend: { display: false }, 
+                            title: { display: true, text: 'Recruitment Funnel' },
                             tooltip: { filter: (item) => item.datasetIndex === 1 },
                             datalabels: {
-                                color: 'white', font: { weight: 'bold', size: 14, },
+                                color: 'white', 
+                                font: { weight: 'bold', size: 14, },
                                 formatter: (value, context) => context.chart.data.datasets[1].data[context.dataIndex],
                                 display: (context) => context.datasetIndex === 1
                             }
@@ -347,12 +485,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     chartInstance.data.datasets[0].data = values;
                     chartInstance.update();
                 } else {
-                    const ctx = document.getElementById(canvasId)?.getContext('2d');
-                    if (!ctx) continue;
+                    const canvas = document.getElementById(canvasId);
+                    const ctx = canvas?.getContext('2d');
+                    if (!ctx || !canvas) continue;
+                    
+                    // Ensure canvas has proper dimensions before creating chart
+                    const container = canvas.parentElement;
+                    if (container && container.classList.contains('chart-container')) {
+                        canvas.style.width = '100%';
+                        canvas.style.height = '100%';
+                        container.classList.remove('loading');
+                    }
                     charts[canvasId] = new Chart(ctx, {
                         type: config.type,
-                        data: { labels: labels, datasets: [{ label: 'Count', data: values, backgroundColor: config.type === 'pie' ? ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] : '#36A2EB' }] },
-                        options: { ...config.options, responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: config.label } } }
+                        data: { 
+                            labels: labels, 
+                            datasets: [{ 
+                                label: 'Count', 
+                                data: values, 
+                                backgroundColor: config.type === 'pie' ? 
+                                    ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] : 
+                                    '#36A2EB',
+                                borderColor: config.type === 'pie' ? 
+                                    ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] : 
+                                    '#36A2EB',
+                                borderWidth: 1
+                            }] 
+                        },
+                        options: { 
+                            ...config.options, 
+                            plugins: { 
+                                ...config.options.plugins,
+                                title: { display: true, text: config.label } 
+                            } 
+                        }
                     });
                 }
             }
@@ -2002,5 +2168,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Initial Load ---
     initializeEventListeners();
-    fetchDataAndRender();
+    
+    // Ensure DOM is fully loaded and layout is stable before initializing charts
+    setTimeout(() => {
+        fetchDataAndRender();
+    }, 100);
 });
