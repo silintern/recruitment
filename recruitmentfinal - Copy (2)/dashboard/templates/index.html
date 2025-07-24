@@ -3,131 +3,438 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recruitment Dashboard</title>
+    <title>Recruitment Dashboard - Adventz Group</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Enhanced Dashboard Styles */
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border-right: 1px solid #e2e8f0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .chart-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .filter-button {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+        }
+
+        .filter-button:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .data-table-container {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .loading-overlay {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .animate-pulse-custom {
+            animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-custom {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Enhanced scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+
+        /* Enhanced animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in-up {
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        /* Status badges */
+        .status-applied { @apply bg-blue-100 text-blue-800 border border-blue-200; }
+        .status-shortlisted { @apply bg-yellow-100 text-yellow-800 border border-yellow-200; }
+        .status-interviewed { @apply bg-purple-100 text-purple-800 border border-purple-200; }
+        .status-offered { @apply bg-green-100 text-green-800 border border-green-200; }
+        .status-hired { @apply bg-emerald-100 text-emerald-800 border border-emerald-200; }
+        .status-rejected { @apply bg-red-100 text-red-800 border border-red-200; }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="min-h-screen">
 
     <!-- Main Container -->
-    <div class="flex h-screen bg-gray-100">
+    <div class="flex h-screen">
 
-        <!-- Left Sidebar (Unchanged) -->
-        <aside class="w-64 bg-white shadow-md flex flex-col">
-            <div class="p-4 border-b flex justify-between items-center">
-                <h1 class="text-xl font-bold text-gray-800">Filters</h1>
-                <button id="reset-filters-btn" class="text-sm text-blue-500 hover:underline">Reset</button>
-            </div>
-            <div id="filters-container" class="flex-grow p-4 overflow-y-auto">
-                <!-- Date Range Filter -->
-                <div class="py-2 border-b">
-                    <button type="button" class="collapsible-btn flex justify-between items-center w-full text-left text-sm font-medium text-gray-800 hover:bg-gray-50 p-2 rounded-md">
-                        <span>Date Range</span>
-                        <svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+        <!-- Enhanced Left Sidebar -->
+        <aside class="w-80 sidebar-gradient flex flex-col">
+            <!-- Sidebar Header -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-xl font-bold gradient-text flex items-center">
+                        <i class="fas fa-filter mr-3"></i>Smart Filters
+                    </h1>
+                    <button id="reset-filters-btn" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200 hover:underline">
+                        <i class="fas fa-refresh mr-1"></i>Reset
                     </button>
-                    <div class="collapsible-content hidden mt-2 pl-2 space-y-2">
+                </div>
+                <p class="text-sm text-gray-600 mt-2">Refine your recruitment insights</p>
+            </div>
+
+            <!-- Enhanced Filters Container -->
+            <div id="filters-container" class="flex-grow p-6 overflow-y-auto space-y-4">
+                <!-- Date Range Filter -->
+                <div class="filter-section rounded-xl p-4">
+                    <button type="button" class="collapsible-btn filter-button flex justify-between items-center w-full text-left font-semibold text-gray-800 p-3 rounded-lg transition-all duration-200">
+                        <span class="flex items-center">
+                            <i class="fas fa-calendar-alt mr-3 text-indigo-600"></i>Date Range
+                        </span>
+                        <svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="collapsible-content hidden mt-4 space-y-3">
                         <div>
-                            <label for="start-date-filter" class="block text-xs font-medium text-gray-600">Start Date</label>
-                            <input type="date" id="start-date-filter" name="start_date" class="filter-select mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                            <label for="start-date-filter" class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                            <input type="date" id="start-date-filter" name="start_date" class="filter-select w-full rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 p-3">
                         </div>
                         <div>
-                            <label for="end-date-filter" class="block text-xs font-medium text-gray-600">End Date</label>
-                            <input type="date" id="end-date-filter" name="end_date" class="filter-select mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                            <label for="end-date-filter" class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                            <input type="date" id="end-date-filter" name="end_date" class="filter-select w-full rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 p-3">
                         </div>
                     </div>
                 </div>
-                <!-- Other Filters -->
-                <div class="py-2 border-b">
-                    <button type="button" class="collapsible-btn flex justify-between items-center w-full text-left text-sm font-medium text-gray-800 hover:bg-gray-50 p-2 rounded-md"><span>Location</span><svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
-                    <div class="collapsible-content hidden mt-2 pl-2"><select id="location-filter" name="location" class="filter-select mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm"><option value="all">All Locations</option></select></div>
+
+                <!-- Location Filter -->
+                <div class="filter-section rounded-xl p-4">
+                    <button type="button" class="collapsible-btn filter-button flex justify-between items-center w-full text-left font-semibold text-gray-800 p-3 rounded-lg">
+                        <span class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-3 text-indigo-600"></i>Location
+                        </span>
+                        <svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="collapsible-content hidden mt-4">
+                        <select id="location-filter" name="location" class="filter-select w-full rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 p-3">
+                            <option value="all">All Locations</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="py-2 border-b">
-                    <button type="button" class="collapsible-btn flex justify-between items-center w-full text-left text-sm font-medium text-gray-800 hover:bg-gray-50 p-2 rounded-md"><span>Post Applying For</span><svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
-                    <div class="collapsible-content hidden mt-2 pl-2"><select id="post-filter" name="post" class="filter-select mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm"><option value="all">All Posts</option></select></div>
+
+                <!-- Position Filter -->
+                <div class="filter-section rounded-xl p-4">
+                    <button type="button" class="collapsible-btn filter-button flex justify-between items-center w-full text-left font-semibold text-gray-800 p-3 rounded-lg">
+                        <span class="flex items-center">
+                            <i class="fas fa-briefcase mr-3 text-indigo-600"></i>Position
+                        </span>
+                        <svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="collapsible-content hidden mt-4">
+                        <select id="post-filter" name="post" class="filter-select w-full rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 p-3">
+                            <option value="all">All Positions</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="py-2 border-b">
-                    <button type="button" class="collapsible-btn flex justify-between items-center w-full text-left text-sm font-medium text-gray-800 hover:bg-gray-50 p-2 rounded-md"><span>Highest Qualification</span><svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
-                    <div class="collapsible-content hidden mt-2 pl-2"><select id="qualification-filter" name="qualification" class="filter-select mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm"><option value="all">All Qualifications</option></select></div>
+
+                <!-- Qualification Filter -->
+                <div class="filter-section rounded-xl p-4">
+                    <button type="button" class="collapsible-btn filter-button flex justify-between items-center w-full text-left font-semibold text-gray-800 p-3 rounded-lg">
+                        <span class="flex items-center">
+                            <i class="fas fa-graduation-cap mr-3 text-indigo-600"></i>Qualification
+                        </span>
+                        <svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="collapsible-content hidden mt-4">
+                        <select id="qualification-filter" name="qualification" class="filter-select w-full rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 p-3">
+                            <option value="all">All Qualifications</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="py-2 border-b">
-                    <button type="button" class="collapsible-btn flex justify-between items-center w-full text-left text-sm font-medium text-gray-800 hover:bg-gray-50 p-2 rounded-md"><span>Business Entity</span><svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
-                    <div class="collapsible-content hidden mt-2 pl-2"><select id="business-entity-filter" name="business_entity" class="filter-select mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm"><option value="all">All Entities</option></select></div>
+
+                <!-- Business Entity Filter -->
+                <div class="filter-section rounded-xl p-4">
+                    <button type="button" class="collapsible-btn filter-button flex justify-between items-center w-full text-left font-semibold text-gray-800 p-3 rounded-lg">
+                        <span class="flex items-center">
+                            <i class="fas fa-building mr-3 text-indigo-600"></i>Business Entity
+                        </span>
+                        <svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="collapsible-content hidden mt-4">
+                        <select id="business-entity-filter" name="business_entity" class="filter-select w-full rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 p-3">
+                            <option value="all">All Entities</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="py-2 border-b">
-                    <button type="button" class="collapsible-btn flex justify-between items-center w-full text-left text-sm font-medium text-gray-800 hover:bg-gray-50 p-2 rounded-md"><span>Degree Course</span><svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
-                    <div class="collapsible-content hidden mt-2 pl-2"><select id="course-filter" name="course" class="filter-select mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm"><option value="all">All Courses</option></select></div>
+
+                <!-- Course Filter -->
+                <div class="filter-section rounded-xl p-4">
+                    <button type="button" class="collapsible-btn filter-button flex justify-between items-center w-full text-left font-semibold text-gray-800 p-3 rounded-lg">
+                        <span class="flex items-center">
+                            <i class="fas fa-book mr-3 text-indigo-600"></i>Course
+                        </span>
+                        <svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="collapsible-content hidden mt-4">
+                        <select id="course-filter" name="course" class="filter-select w-full rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 p-3">
+                            <option value="all">All Courses</option>
+                        </select>
+                    </div>
                 </div>
-                 <div class="py-2 border-b">
-                    <button type="button" class="collapsible-btn flex justify-between items-center w-full text-left text-sm font-medium text-gray-800 hover:bg-gray-50 p-2 rounded-md"><span>College</span><svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
-                    <div class="collapsible-content hidden mt-2 pl-2"><select id="college-filter" name="college" class="filter-select mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm"><option value="all">All Colleges</option></select></div>
+
+                <!-- College Filter -->
+                <div class="filter-section rounded-xl p-4">
+                    <button type="button" class="collapsible-btn filter-button flex justify-between items-center w-full text-left font-semibold text-gray-800 p-3 rounded-lg">
+                        <span class="flex items-center">
+                            <i class="fas fa-university mr-3 text-indigo-600"></i>College
+                        </span>
+                        <svg class="h-5 w-5 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="collapsible-content hidden mt-4">
+                        <select id="college-filter" name="college" class="filter-select w-full rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 p-3">
+                            <option value="all">All Colleges</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-hidden relative">
-            <!-- Header -->
-            <header class="bg-white shadow-sm p-4 flex justify-between items-center z-10">
-                <h2 class="text-2xl font-semibold text-gray-800">Recruitment Management Dashboard</h2>
-                <div>
-                    <!-- **FIXED LINK** -->
-                    <a href="{{ url_for('route_logout') }}" class="text-sm text-blue-500 hover:underline">Logout</a>
+            <!-- Enhanced Header -->
+            <header class="dashboard-header text-white p-6 flex justify-between items-center z-10">
+                <div class="flex items-center">
+                    <div class="mr-4">
+                        <i class="fas fa-chart-line text-3xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-bold">Recruitment Analytics</h2>
+                        <p class="text-indigo-100 text-sm">Adventz Group Dashboard</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm text-indigo-100">Welcome back</p>
+                        <p class="font-semibold">{{ session.get('user_email', 'Admin') }}</p>
+                    </div>
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <a href="{{ url_for('route_logout') }}" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:transform hover:scale-105">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
                 </div>
             </header>
 
-            <!-- Loading Overlay -->
-            <div id="loading-overlay" class="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center hidden z-40">
-                <div class="text-lg font-semibold text-gray-700">Loading Dashboard...</div>
+            <!-- Enhanced Loading Overlay -->
+            <div id="loading-overlay" class="absolute inset-0 loading-overlay flex items-center justify-center hidden z-40">
+                <div class="text-center">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mb-4"></div>
+                    <div class="text-xl font-semibold text-gray-700">Loading Dashboard...</div>
+                    <div class="text-sm text-gray-500 mt-2">Analyzing recruitment data</div>
+                </div>
             </div>
 
             <!-- Dashboard Content -->
-            <div id="dashboard-content" class="flex-1 p-6 overflow-y-auto">
+            <div id="dashboard-content" class="flex-1 p-6 overflow-y-auto fade-in">
                 <!-- Error Display Area -->
-                <div id="error-display" class="hidden mb-6"></div>
-
-                <!-- KPIs -->
-                <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6"></div>
-
-                <!-- Visualizations -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <div class="bg-white p-4 rounded-lg shadow"><canvas id="appsPerCompanyChart"></canvas></div>
-                    <div class="bg-white p-4 rounded-lg shadow"><canvas id="appsPerCollegeChart"></canvas></div>
-                    <div class="bg-white p-4 rounded-lg shadow"><canvas id="recruitmentFunnelChart"></canvas></div>
-                    <div class="bg-white p-4 rounded-lg shadow"><canvas id="genderDiversityChart"></canvas></div>
+                <div id="error-display" class="hidden mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+                        <div class="text-red-800 font-medium">Error loading dashboard data</div>
+                    </div>
                 </div>
 
-                <!-- Table View -->
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold">Responses Overview</h3>
-                        <div class="flex items-center space-x-4">
-                            {% if role == 'admin' %}
-                            <button id="form-config-btn" class="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600">Form Configuration</button>
-                            <button id="user-management-btn" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">User Management</button>
-                            <button id="status-management-btn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Status Management</button>
-                            {% endif %}
-                            <button id="download-csv-btn" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">Download CSV</button>
-                            <div class="relative inline-block text-left">
-                                <div>
-                                    <button type="button" id="column-selector-btn" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                        Select Columns
-                                        <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                    </button>
-                                </div>
-                                <div id="column-selector-dropdown" class="origin-top-right absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-20">
-                                    <div id="column-selector-options" class="py-1"></div>
-                                </div>
-                            </div>
+                <!-- Enhanced KPIs -->
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold gradient-text mb-6 flex items-center">
+                        <i class="fas fa-tachometer-alt mr-3"></i>Key Performance Indicators
+                    </h3>
+                    <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6 slide-in-up"></div>
+                </div>
+
+                <!-- Enhanced Visualizations -->
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold gradient-text mb-6 flex items-center">
+                        <i class="fas fa-chart-bar mr-3"></i>Analytics & Insights
+                    </h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 slide-in-up">
+                        <div class="chart-container rounded-xl p-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-building mr-2 text-indigo-600"></i>Applications by Company
+                            </h4>
+                            <canvas id="appsPerCompanyChart"></canvas>
+                        </div>
+                        <div class="chart-container rounded-xl p-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-university mr-2 text-indigo-600"></i>Applications by College
+                            </h4>
+                            <canvas id="appsPerCollegeChart"></canvas>
+                        </div>
+                        <div class="chart-container rounded-xl p-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-funnel-dollar mr-2 text-indigo-600"></i>Recruitment Funnel
+                            </h4>
+                            <canvas id="recruitmentFunnelChart"></canvas>
+                        </div>
+                        <div class="chart-container rounded-xl p-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-venus-mars mr-2 text-indigo-600"></i>Gender Diversity
+                            </h4>
+                            <canvas id="genderDiversityChart"></canvas>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table id="data-table" class="min-w-full bg-white">
-                            <thead class="bg-gray-200"></thead>
-                            <tbody></tbody>
-                        </table>
+                </div>
+
+                <!-- Enhanced Data Table Section -->
+                <div class="data-table-container rounded-xl overflow-hidden slide-in-up">
+                    <div class="table-header p-6 flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-white flex items-center">
+                            <i class="fas fa-table mr-3"></i>Candidate Applications
+                        </h3>
+                        <div class="flex space-x-3">
+                            <button id="column-selector-btn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                                <i class="fas fa-columns mr-2"></i>Columns
+                            </button>
+                            {% if role == 'admin' %}
+                            <button id="status-modal-btn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                                <i class="fas fa-user-edit mr-2"></i>Update Status
+                            </button>
+                            <button id="form-config-btn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                                <i class="fas fa-cog mr-2"></i>Form Config
+                            </button>
+                            <button id="user-management-btn" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                                <i class="fas fa-users mr-2"></i>Users
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table id="data-table" class="min-w-full">
+                                <thead></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
