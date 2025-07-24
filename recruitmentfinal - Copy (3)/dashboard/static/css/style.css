@@ -49,7 +49,10 @@
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Enhanced sidebar styling */
@@ -60,10 +63,7 @@ aside {
 }
 
 aside h1 {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
     font-weight: 700;
 }
 
@@ -75,10 +75,7 @@ header {
 }
 
 header h2 {
-    background: linear-gradient(135deg, var(--dark-color) 0%, var(--text-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
@@ -109,13 +106,18 @@ header h2 {
 }
 
 #kpi-grid .bg-white h4 {
-    color: var(--text-secondary);
+    color: var(--text-secondary) !important;
     font-weight: 500;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
 }
 
 #kpi-grid .bg-white p {
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     font-weight: 700;
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: 0;
 }
 
 /* Enhanced chart containers */
@@ -140,14 +142,19 @@ header h2 {
 
 #data-table th {
     background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     font-weight: 600;
     border-bottom: 2px solid var(--border-color);
+    text-align: left;
+    padding: 0.75rem 1rem;
 }
 
 #data-table td {
     border-bottom: 1px solid #f1f5f9;
     transition: background-color 0.2s ease;
+    color: var(--text-primary) !important;
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
 }
 
 #data-table tr:hover td {
@@ -210,9 +217,19 @@ header h2 {
 
 /* Enhanced modal styling */
 .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     backdrop-filter: blur(4px);
     background: rgba(15, 23, 42, 0.5);
     animation: fadeIn 0.3s ease;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
 }
 
 @keyframes fadeIn {
@@ -226,6 +243,13 @@ header h2 {
     border-radius: var(--border-radius);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: slideUp 0.4s ease-out;
+    width: 100%;
+    max-width: 56rem;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 10000;
 }
 
 @keyframes slideUp {
@@ -242,11 +266,37 @@ header h2 {
 .modal-header {
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     border-bottom: 1px solid var(--border-color);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
 }
 
 .modal-title {
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     font-weight: 600;
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex-grow: 1;
+    color: var(--text-primary);
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
 }
 
 .modal-close-btn {
@@ -302,10 +352,8 @@ header h2 {
 }
 
 #loading-overlay div {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary-color);
+    font-weight: 600;
     animation: pulse 2s infinite;
 }
 
@@ -524,7 +572,7 @@ canvas {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 40;
+    z-index: 49;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -783,3 +831,42 @@ textarea:focus {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Fix text rendering issues */
+* {
+    box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0;
+}
+
+p, span, div, td, th, label, input, select, textarea {
+    color: var(--text-primary) !important;
+}
+
+/* Override any conflicting Tailwind classes */
+.text-gray-800 {
+    color: var(--text-primary) !important;
+}
+
+.text-gray-700 {
+    color: var(--text-primary) !important;
+}
+
+.text-gray-600 {
+    color: var(--text-secondary) !important;
+}
+
+.text-gray-500 {
+    color: var(--text-secondary) !important;
+}
+
+/* Ensure proper z-index hierarchy */
+.z-40 { z-index: 40 !important; }
+.z-50 { z-index: 50 !important; }
+.z-9999 { z-index: 9999 !important; }
+.z-10000 { z-index: 10000 !important; }
