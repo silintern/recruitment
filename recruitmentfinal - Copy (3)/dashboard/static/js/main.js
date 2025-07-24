@@ -1067,24 +1067,24 @@ document.addEventListener('DOMContentLoaded', function() {
             populateFieldList(currentFields);
             populateSectionsList(currentSections);
             populateExistingSections(currentSections);
-            populateSortableFields(currentFields);
-            populateSortableSections(currentSections);
-            populateValidationsTab(currentFields);
-            
-            const modal = document.getElementById('form-config-modal');
+                    populateSortableFields(currentFields);
+        populateSortableSections(currentSections);
+        populateValidationsTab(currentFields);
+        
+        const modal = document.getElementById('form-config-modal');
         if (modal) {
             modal.classList.remove('hidden');
         }
+        
+        // Initialize drag and drop after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            console.log('Initializing drag and drop on modal open');
+            initializeSectionDragAndDrop();
+            initializeDragAndDrop();
             
-            // Check if sections tab is active and initialize drag and drop
-            const sectionsTab = document.getElementById('tab-sections');
-            if (sectionsTab && sectionsTab.classList.contains('active')) {
-                setTimeout(() => {
-                    console.log('Sections tab is active on modal open, initializing drag and drop');
-                    initializeSectionDragAndDrop();
-                    initializeDragAndDrop();
-                }, 200);
-            }
+            // Also initialize form config tabs
+            initializeFormConfigTabs();
+        }, 300);
         } catch (error) {
             alert(`Could not load form configuration: ${error.message}`);
         }
@@ -1273,8 +1273,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sortableContainer.appendChild(div);
         });
 
-        // Don't initialize drag and drop here since the tab might be hidden
-        // It will be initialized when the sections tab is activated
+        console.log(`Populated ${sortedSections.length} sortable section items`);
     }
 
     function populateExistingSections(sections = []) {
@@ -1323,8 +1322,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sortableContainer.appendChild(div);
         });
 
-        // Don't initialize drag and drop here since the tab might be hidden
-        // It will be initialized when the sections tab is activated
+        console.log(`Populated ${sortedFields.length} sortable field items`);
     }
 
     function populateValidationsTab(fields = []) {
@@ -1435,13 +1433,12 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         
+        const container = e.currentTarget;
+        container.classList.add('drag-over');
+        
         const draggedElement = document.querySelector('.sortable-field-item.dragging');
         if (!draggedElement) return;
         
-        const targetElement = e.target.closest('.sortable-field-item');
-        if (!targetElement || targetElement === draggedElement) return;
-        
-        const container = targetElement.parentNode;
         const afterElement = getFieldAfterElement(container, e.clientY);
         
         if (afterElement == null) {
@@ -1453,7 +1450,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleFieldDrop(e) {
         e.preventDefault();
-        // The reordering is already handled in dragover
+        const container = e.currentTarget;
+        container.classList.remove('drag-over');
+        console.log('Field drop completed');
     }
 
     function handleFieldDragEnd(e) {
@@ -1461,6 +1460,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (item) {
             item.classList.remove('dragging');
         }
+        
+        // Remove drag-over class from all containers
+        document.querySelectorAll('#sortable-fields').forEach(container => {
+            container.classList.remove('drag-over');
+        });
+        
+        console.log('Field drag ended');
     }
     
     function getFieldAfterElement(container, y) {
@@ -1941,13 +1947,12 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         
+        const container = e.currentTarget;
+        container.classList.add('drag-over');
+        
         const draggedElement = document.querySelector('.sortable-section-item.dragging');
         if (!draggedElement) return;
         
-        const targetElement = e.target.closest('.sortable-section-item');
-        if (!targetElement || targetElement === draggedElement) return;
-        
-        const container = targetElement.parentNode;
         const afterElement = getSectionAfterElement(container, e.clientY);
         
         if (afterElement == null) {
@@ -1962,7 +1967,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function handleSectionDrop(e) {
         e.preventDefault();
-        // The reordering is already handled in dragover
+        const container = e.currentTarget;
+        container.classList.remove('drag-over');
+        console.log('Section drop completed');
     }
     
     function handleSectionDragEnd(e) {
@@ -1972,8 +1979,14 @@ document.addEventListener('DOMContentLoaded', function() {
             item.style.opacity = '1';
         }
         
+        // Remove drag-over class from all containers
+        document.querySelectorAll('#sortable-sections').forEach(container => {
+            container.classList.remove('drag-over');
+        });
+        
         // Final update of order numbers
         updateSectionOrderNumbers();
+        console.log('Section drag ended');
     }
     
     function getSectionAfterElement(container, y) {
