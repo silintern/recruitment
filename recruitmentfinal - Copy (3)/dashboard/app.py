@@ -8,7 +8,7 @@ from flask import Flask, jsonify, render_template, request, redirect, url_for, s
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 # --- App Initialization ---
 app = Flask(__name__)
@@ -49,6 +49,63 @@ def init_db():
     with app.app_context():
         conn = get_db_conn()
         cursor = conn.cursor()
+        
+        # Check if custom sections already exist - if so, skip form config initialization
+        try:
+            custom_sections = cursor.execute("SELECT COUNT(*) FROM form_sections WHERE name = 'Personal Details'").fetchone()
+            if custom_sections and custom_sections[0] > 0:
+                print("Custom sections detected - skipping form config initialization")
+                # Still create other tables but skip form config population
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        email TEXT UNIQUE NOT NULL,
+                        password_hash TEXT NOT NULL,
+                        role TEXT NOT NULL CHECK(role IN ('admin', 'viewer'))
+                    )
+                ''')
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS statuses (
+                        email TEXT PRIMARY KEY,
+                        name TEXT,
+                        status TEXT NOT NULL
+                    )
+                ''')
+                
+                # Create form_config table if it doesn't exist
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS form_config (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT UNIQUE NOT NULL,
+                        label TEXT NOT NULL,
+                        type TEXT NOT NULL,
+                        subsection TEXT,
+                        options TEXT,
+                        required BOOLEAN NOT NULL DEFAULT 0,
+                        is_core BOOLEAN NOT NULL DEFAULT 0,
+                        field_order INTEGER DEFAULT 0,
+                        validations TEXT
+                    )
+                ''')
+                
+                # Create form_sections table if it doesn't exist
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS form_sections (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT UNIQUE NOT NULL,
+                        section_order INTEGER DEFAULT 0,
+                        description TEXT,
+                        icon TEXT DEFAULT 'folder',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                
+                conn.commit()
+                conn.close()
+                print("Database initialized successfully (custom sections preserved).")
+                return
+        except:
+            pass  # Table doesn't exist yet, continue with normal initialization
 
         # --- User and Status Tables ---
         cursor.execute('''
@@ -425,9 +482,18 @@ def get_public_form_config():
         # Fallback: maintain the order of subsections based on the first field's order in each
         subsection_order = sorted(subsections.keys(), key=lambda k: subsections[k][0]['field_order'])
     
-    ordered_subsections = {k: subsections[k] for k in subsection_order}
+    ordered_subsections = OrderedDict()
+    for k in subsection_order:
+        ordered_subsections[k] = subsections[k]
     
-    return jsonify(ordered_subsections)
+    # Use Flask's Response with json.dumps to preserve order
+    import json
+    response = app.response_class(
+        response=json.dumps(ordered_subsections, separators=(',', ':')),
+        status=200,
+        mimetype='application/json'
+    )
+    return response
 
 
 @app.route('/api/form/config', methods=['GET'])
