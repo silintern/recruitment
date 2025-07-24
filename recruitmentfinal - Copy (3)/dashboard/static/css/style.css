@@ -5,6 +5,12 @@
     display: none !important;
 }
 
+/* Text normalization - ensure consistent font family */
+body, html {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    color: #1e293b !important;
+}
+
 /* Modern color scheme variables */
 :root {
     --primary-color: #3b82f6;
@@ -47,12 +53,13 @@
 
 /* Enhanced body and main layout */
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    color: var(--text-primary) !important;
+    color: #1e293b !important;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
 }
 
 /* Enhanced sidebar styling */
@@ -63,8 +70,9 @@ aside {
 }
 
 aside h1 {
-    color: var(--text-primary);
+    color: #1e293b !important;
     font-weight: 700;
+    font-family: 'Inter', sans-serif !important;
 }
 
 /* Enhanced header styling */
@@ -75,8 +83,9 @@ header {
 }
 
 header h2 {
-    color: var(--text-primary);
+    color: #1e293b !important;
     font-weight: 600;
+    font-family: 'Inter', sans-serif !important;
 }
 
 /* Enhanced KPI cards */
@@ -106,18 +115,20 @@ header h2 {
 }
 
 #kpi-grid .bg-white h4 {
-    color: var(--text-secondary) !important;
+    color: #64748b !important;
     font-weight: 500;
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
+    font-family: 'Inter', sans-serif !important;
 }
 
 #kpi-grid .bg-white p {
-    color: var(--text-primary) !important;
+    color: #1e293b !important;
     font-weight: 700;
     font-size: 2rem;
     line-height: 1.2;
     margin: 0;
+    font-family: 'Inter', sans-serif !important;
 }
 
 /* Enhanced chart containers */
@@ -141,20 +152,22 @@ header h2 {
 }
 
 #data-table th {
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    color: var(--text-primary) !important;
+    background: #f8fafc !important;
+    color: #1e293b !important;
     font-weight: 600;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 1px solid #e2e8f0;
     text-align: left;
     padding: 0.75rem 1rem;
+    font-family: 'Inter', sans-serif !important;
 }
 
 #data-table td {
     border-bottom: 1px solid #f1f5f9;
     transition: background-color 0.2s ease;
-    color: var(--text-primary) !important;
+    color: #1e293b !important;
     padding: 0.75rem 1rem;
     vertical-align: middle;
+    font-family: 'Inter', sans-serif !important;
 }
 
 #data-table tr:hover td {
@@ -275,17 +288,19 @@ header h2 {
 }
 
 .modal-title {
-    color: var(--text-primary) !important;
+    color: #1e293b !important;
     font-weight: 600;
     font-size: 1.25rem;
     margin: 0;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .modal-body {
     padding: 1.5rem;
     overflow-y: auto;
     flex-grow: 1;
-    color: var(--text-primary);
+    color: #1e293b !important;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .modal-footer {
@@ -317,15 +332,19 @@ header h2 {
 
 .modal-input, .form-input-enhanced {
     border-radius: 0.5rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid #e2e8f0;
     transition: all 0.3s ease;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    background: #ffffff;
+    color: #1e293b !important;
+    font-family: 'Inter', sans-serif !important;
+    padding: 0.5rem 0.75rem;
 }
 
 .modal-input:focus, .form-input-enhanced:focus {
-    border-color: var(--primary-color);
+    border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     background: #ffffff;
+    outline: none;
 }
 
 /* Enhanced form configuration styles */
@@ -837,32 +856,187 @@ textarea:focus {
     box-sizing: border-box;
 }
 
+/* Reset and normalize text styles */
+body, html {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    color: #1e293b !important;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+}
+
+/* Headings */
 h1, h2, h3, h4, h5, h6 {
-    color: var(--text-primary) !important;
+    color: #1e293b !important;
     font-weight: 600;
     line-height: 1.4;
     margin: 0;
+    font-family: 'Inter', sans-serif !important;
 }
 
-p, span, div, td, th, label, input, select, textarea {
-    color: var(--text-primary) !important;
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.125rem; }
+h4 { font-size: 1rem; }
+h5 { font-size: 0.875rem; }
+h6 { font-size: 0.75rem; }
+
+/* Text elements */
+p {
+    color: #1e293b !important;
+    margin: 0 0 1rem 0;
+    font-family: 'Inter', sans-serif !important;
 }
 
-/* Override any conflicting Tailwind classes */
-.text-gray-800 {
-    color: var(--text-primary) !important;
+span {
+    color: inherit;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Labels and form elements */
+label {
+    color: #1e293b !important;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Table styling */
+table {
+    font-family: 'Inter', sans-serif !important;
+}
+
+th {
+    color: #1e293b !important;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif !important;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+td {
+    color: #1e293b !important;
+    font-family: 'Inter', sans-serif !important;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+/* Input styling */
+input, select, textarea {
+    color: #1e293b !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.875rem;
+}
+
+/* Button text */
+button {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500;
+}
+
+/* Override Tailwind classes that might be causing issues */
+.text-gray-800, .text-gray-900 {
+    color: #1e293b !important;
 }
 
 .text-gray-700 {
-    color: var(--text-primary) !important;
+    color: #374151 !important;
 }
 
 .text-gray-600 {
-    color: var(--text-secondary) !important;
+    color: #64748b !important;
 }
 
 .text-gray-500 {
-    color: var(--text-secondary) !important;
+    color: #64748b !important;
+}
+
+.text-gray-400 {
+    color: #94a3b8 !important;
+}
+
+.text-blue-500, .text-blue-600 {
+    color: #3b82f6 !important;
+}
+
+.text-red-500, .text-red-600 {
+    color: #ef4444 !important;
+}
+
+.text-green-500, .text-green-600 {
+    color: #10b981 !important;
+}
+
+.text-purple-500, .text-purple-600 {
+    color: #8b5cf6 !important;
+}
+
+.text-white {
+    color: #ffffff !important;
+}
+
+/* Specific dashboard element fixes */
+.sidebar h1,
+aside h1 {
+    color: #1e293b !important;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif !important;
+}
+
+header h2 {
+    color: #1e293b !important;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* KPI cards */
+#kpi-grid .bg-white h4 {
+    color: #64748b !important;
+    font-weight: 500;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    font-family: 'Inter', sans-serif !important;
+}
+
+#kpi-grid .bg-white p {
+    color: #1e293b !important;
+    font-weight: 700;
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: 0;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Chart titles */
+.chart-container h4,
+canvas + h4,
+.bg-white h4 {
+    color: #1e293b !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Modal text */
+.modal-title {
+    color: #1e293b !important;
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin: 0;
+    font-family: 'Inter', sans-serif !important;
+}
+
+.modal-body {
+    color: #1e293b !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Loading text */
+#loading-overlay div {
+    color: #3b82f6 !important;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif !important;
 }
 
 /* Ensure proper z-index hierarchy */
