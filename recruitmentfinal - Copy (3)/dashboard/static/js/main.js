@@ -526,12 +526,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- UI State Helpers ---
-    const showLoading = (isLoading) => document.getElementById('loading-overlay').classList.toggle('hidden', !isLoading);
-    const hideError = () => document.getElementById('error-display').classList.add('hidden');
+    const showLoading = (isLoading) => {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.toggle('hidden', !isLoading);
+        }
+    };
+    const hideError = () => {
+        const errorDisplay = document.getElementById('error-display');
+        if (errorDisplay) {
+            errorDisplay.classList.add('hidden');
+        }
+    };
     const showError = (message) => {
         const errorDisplay = document.getElementById('error-display');
-        errorDisplay.innerHTML = `<div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">${message}</div>`;
-        errorDisplay.classList.remove('hidden');
+        if (errorDisplay) {
+            errorDisplay.innerHTML = `<div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">${message}</div>`;
+            errorDisplay.classList.remove('hidden');
+        }
     };
 
     // --- Event Handlers ---
@@ -959,7 +971,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error('Failed to fetch users.');
             const users = await response.json();
             populateUserList(users);
-            document.getElementById('user-management-modal').classList.remove('hidden');
+            const modal = document.getElementById('user-management-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
         } catch (error) {
             alert(`Could not load user data: ${error.message}`);
         }
@@ -1056,7 +1071,10 @@ document.addEventListener('DOMContentLoaded', function() {
             populateSortableSections(currentSections);
             populateValidationsTab(currentFields);
             
-            document.getElementById('form-config-modal').classList.remove('hidden');
+            const modal = document.getElementById('form-config-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
             
             // Check if sections tab is active and initialize drag and drop
             const sectionsTab = document.getElementById('tab-sections');
@@ -1497,7 +1515,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             feedbackEl.textContent = result.message;
             feedbackEl.className = 'text-sm mt-2 text-green-600';
-            document.getElementById('add-field-form').reset();
+            const form = document.getElementById('add-field-form');
+        if (form) {
+            form.reset();
+        }
             toggleOptionsContainer(); // Reset options visibility
             openFormConfigModal(); // Refresh the modal
         } catch (error) {
@@ -1512,29 +1533,53 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!field) return;
 
         // Populate edit modal
-        document.getElementById('edit-field-id').value = field.id;
-        document.getElementById('edit-field-label').value = field.label;
-        document.getElementById('edit-field-type').value = field.type;
-        document.getElementById('edit-field-subsection').value = field.subsection || '';
-        document.getElementById('edit-field-options').value = field.options || '';
-        document.getElementById('edit-field-required').checked = field.required;
-        document.getElementById('edit-field-validations').value = field.validations || '{}';
+        const editFieldId = document.getElementById('edit-field-id');
+        const editFieldLabel = document.getElementById('edit-field-label');
+        const editFieldType = document.getElementById('edit-field-type');
+        const editFieldSubsection = document.getElementById('edit-field-subsection');
+        const editFieldOptions = document.getElementById('edit-field-options');
+        const editFieldRequired = document.getElementById('edit-field-required');
+        const editFieldValidations = document.getElementById('edit-field-validations');
+        
+        if (editFieldId) editFieldId.value = field.id;
+        if (editFieldLabel) editFieldLabel.value = field.label;
+        if (editFieldType) editFieldType.value = field.type;
+        if (editFieldSubsection) editFieldSubsection.value = field.subsection || '';
+        if (editFieldOptions) editFieldOptions.value = field.options || '';
+        if (editFieldRequired) editFieldRequired.checked = field.required;
+        if (editFieldValidations) editFieldValidations.value = field.validations || '{}';
 
         // Show/hide options container based on field type
         toggleEditOptionsContainer();
 
-        document.getElementById('field-edit-modal').classList.remove('hidden');
+        const modal = document.getElementById('field-edit-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
     }
 
     async function handleSaveFieldEdit() {
-        const fieldId = document.getElementById('edit-field-id').value;
+        const fieldIdEl = document.getElementById('edit-field-id');
+        const labelEl = document.getElementById('edit-field-label');
+        const typeEl = document.getElementById('edit-field-type');
+        const subsectionEl = document.getElementById('edit-field-subsection');
+        const optionsEl = document.getElementById('edit-field-options');
+        const requiredEl = document.getElementById('edit-field-required');
+        const validationsEl = document.getElementById('edit-field-validations');
+        
+        if (!fieldIdEl || !labelEl || !typeEl || !subsectionEl || !optionsEl || !requiredEl || !validationsEl) {
+            alert('Form elements not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        const fieldId = fieldIdEl.value;
         const data = {
-            label: document.getElementById('edit-field-label').value,
-            type: document.getElementById('edit-field-type').value,
-            subsection: document.getElementById('edit-field-subsection').value,
-            options: document.getElementById('edit-field-options').value,
-            required: document.getElementById('edit-field-required').checked,
-            validations: document.getElementById('edit-field-validations').value
+            label: labelEl.value,
+            type: typeEl.value,
+            subsection: subsectionEl.value,
+            options: optionsEl.value,
+            required: requiredEl.checked,
+            validations: validationsEl.value
         };
 
         try {
@@ -1546,7 +1591,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || 'Failed to update field.');
             
-            document.getElementById('field-edit-modal').classList.add('hidden');
+            const modal = document.getElementById('field-edit-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
             openFormConfigModal(); // Refresh the modal
         } catch (error) {
             alert(`Could not update field: ${error.message}`);
@@ -2043,7 +2091,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }, 250);
                 }
-            });
             });
         });
     }
