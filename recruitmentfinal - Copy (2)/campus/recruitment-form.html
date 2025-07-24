@@ -365,13 +365,18 @@
             try {
                 showLoadingState();
 
-                const response = await fetch('http://127.0.0.1:5000/api/public/form-config');
+                const response = await fetch('http://127.0.0.1:5001/api/form-config');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                formConfig = await response.json();
-                totalSteps = Object.keys(formConfig).length;
+                const configData = await response.json();
+                if (configData.success) {
+                    formConfig = configData.sections;
+                    totalSteps = Object.keys(formConfig).length;
+                } else {
+                    throw new Error(configData.message || 'Failed to load configuration');
+                }
                 
                 renderDynamicForm();
                 setupProgressTracking();
@@ -1086,7 +1091,7 @@
 
                 try {
                     const formData = new FormData(event.target);
-                    const apiEndpoint = 'http://127.0.0.1:5000/api/submit_application';
+                    const apiEndpoint = 'http://127.0.0.1:5001/api/submit-application';
 
                     const response = await fetch(apiEndpoint, {
                         method: 'POST',

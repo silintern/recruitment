@@ -307,7 +307,9 @@ def api_get_data():
             'interviewed': int(status_counts.get('Interviewed', 0)), 'offered': int(status_counts.get('Offered', 0)),
             'hired': int(status_counts.get('Hired', 0)), 'rejected': int(status_counts.get('Rejected', 0)),
         }
+        # Fix acceptance rate calculation: hired / offered (those who accepted offers out of those who received offers)
         kpis['acceptance_rate'] = round((kpis['hired'] / kpis['offered']) * 100 if kpis['offered'] > 0 else 0, 2)
+        # Rejection rate: rejected / total applications
         kpis['rejection_rate'] = round((kpis['rejected'] / len(df)) * 100 if len(df) > 0 else 0, 2)
 
         charts = {
@@ -583,11 +585,24 @@ def reorder_form_fields():
     if session.get('user_role') != 'admin': return jsonify({"error": "Admin access required."}), 403
     field_orders = request.json.get('field_orders', [])
     
+    if not field_orders:
+        return jsonify({"error": "No field orders provided."}), 400
+    
     conn = get_db_conn()
     try:
         cursor = conn.cursor()
-        for field_id, new_order in field_orders:
-            cursor.execute("UPDATE form_config SET field_order = ? WHERE id = ?", (new_order, field_id))
+        for field_data in field_orders:
+            if isinstance(field_data, list) and len(field_data) >= 2:
+                field_id, new_order = field_data[0], field_data[1]
+            elif isinstance(field_data, dict):
+                field_id = field_data.get('id')
+                new_order = field_data.get('order')
+            else:
+                continue
+                
+            if field_id and new_order is not None:
+                cursor.execute("UPDATE form_config SET field_order = ? WHERE id = ?", (new_order, field_id))
+                
         conn.commit()
         return jsonify({"success": True, "message": "Field order updated successfully."})
     except Exception as e:

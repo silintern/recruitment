@@ -55,17 +55,39 @@ document.addEventListener('DOMContentLoaded', function() {
         const kpiGrid = document.getElementById('kpi-grid');
         if (!kpiGrid) return;
         kpiGrid.innerHTML = '';
+        
         const kpiMapping = {
-            applications: 'No. of Applications', shortlisted: 'No. of Shortlisted',
-            interviewed: 'No. of Interviewed', offered: 'No. of Offered',
-            hired: 'No. of Hired', rejected: 'No. of Rejected',
-            acceptance_rate: 'Acceptance Rate (%)', rejection_rate: 'Rejection Rate (%)'
+            applications: { label: 'Applications', icon: 'fas fa-file-alt', color: 'blue' },
+            shortlisted: { label: 'Shortlisted', icon: 'fas fa-check-circle', color: 'yellow' },
+            interviewed: { label: 'Interviewed', icon: 'fas fa-comments', color: 'purple' },
+            offered: { label: 'Offered', icon: 'fas fa-handshake', color: 'green' },
+            hired: { label: 'Hired', icon: 'fas fa-user-check', color: 'emerald' },
+            rejected: { label: 'Rejected', icon: 'fas fa-times-circle', color: 'red' },
+            acceptance_rate: { label: 'Acceptance Rate', icon: 'fas fa-percentage', color: 'indigo', suffix: '%' },
+            rejection_rate: { label: 'Rejection Rate', icon: 'fas fa-chart-line', color: 'gray', suffix: '%' }
         };
+
         for (const key in kpiMapping) {
-            const card = document.createElement('div');
-            card.className = 'bg-white p-4 rounded-lg shadow text-center';
+            const config = kpiMapping[key];
             const value = kpis[key] !== undefined ? kpis[key] : '0';
-            card.innerHTML = `<h4 class="text-sm font-medium text-gray-500">${kpiMapping[key]}</h4><p class="text-3xl font-bold text-gray-800">${value}</p>`;
+            const displayValue = config.suffix ? `${value}${config.suffix}` : value;
+            
+            const card = document.createElement('div');
+            card.className = `kpi-card rounded-xl p-6 text-center transition-all duration-300 hover:scale-105`;
+            
+            card.innerHTML = `
+                <div class="flex items-center justify-center mb-3">
+                    <div class="w-12 h-12 bg-${config.color}-100 rounded-full flex items-center justify-center">
+                        <i class="${config.icon} text-${config.color}-600 text-xl"></i>
+                    </div>
+                </div>
+                <h4 class="text-sm font-semibold text-gray-600 mb-2">${config.label}</h4>
+                <p class="text-3xl font-bold text-gray-800 mb-1">${displayValue}</p>
+                <div class="w-full bg-gray-200 rounded-full h-1 mt-3">
+                    <div class="bg-gradient-to-r from-${config.color}-400 to-${config.color}-600 h-1 rounded-full transition-all duration-500" style="width: ${Math.min((value / Math.max(...Object.values(kpis).filter(v => typeof v === 'number'))) * 100, 100)}%"></div>
+                </div>
+            `;
+            
             kpiGrid.appendChild(card);
         }
     }
