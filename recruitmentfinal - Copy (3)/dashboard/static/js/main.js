@@ -982,6 +982,9 @@ document.addEventListener('DOMContentLoaded', function() {
             div.draggable = true;
             div.dataset.sectionName = section.name;
             
+            // Add debug attribute
+            div.setAttribute('title', `Section: ${section.name}, Order: ${section.order || 0}`);
+            
             const iconMap = {
                 'folder': '📁', 'user': '👤', 'briefcase': '💼', 'graduation-cap': '🎓',
                 'phone': '📞', 'file-alt': '📄', 'cog': '⚙️', 'star': '⭐'
@@ -1001,8 +1004,10 @@ document.addEventListener('DOMContentLoaded', function() {
             sortableContainer.appendChild(div);
         });
 
-        // Initialize drag and drop for sections
-        initializeSectionDragAndDrop();
+        // Initialize drag and drop for sections with a small delay to ensure DOM is ready
+        setTimeout(() => {
+            initializeSectionDragAndDrop();
+        }, 100);
     }
 
     function populateExistingSections(sections = []) {
@@ -1035,6 +1040,9 @@ document.addEventListener('DOMContentLoaded', function() {
             div.className = 'sortable-field-item';
             div.draggable = true;
             div.dataset.fieldId = field.id;
+            
+            // Add debug attribute
+            div.setAttribute('title', `Field ID: ${field.id}, Order: ${field.field_order || 0}`);
             div.innerHTML = `
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
@@ -1048,8 +1056,10 @@ document.addEventListener('DOMContentLoaded', function() {
             sortableContainer.appendChild(div);
         });
 
-        // Add drag and drop functionality
-        initializeDragAndDrop();
+        // Add drag and drop functionality with a small delay to ensure DOM is ready
+        setTimeout(() => {
+            initializeDragAndDrop();
+        }, 100);
     }
 
     function populateValidationsTab(fields = []) {
@@ -1121,46 +1131,86 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initializeDragAndDrop() {
-        const sortableItems = document.querySelectorAll('.sortable-field-item');
+        const sortableContainer = document.getElementById('sortable-fields');
+        if (!sortableContainer) {
+            console.warn('sortable-fields container not found');
+            return;
+        }
         
-        sortableItems.forEach(item => {
-            item.addEventListener('dragstart', handleDragStart);
-            item.addEventListener('dragover', handleDragOver);
-            item.addEventListener('drop', handleDrop);
-            item.addEventListener('dragend', handleDragEnd);
-        });
+        console.log('Initializing field drag and drop');
+        
+        // Remove existing event listeners to prevent duplicates
+        sortableContainer.removeEventListener('dragstart', handleFieldDragStart);
+        sortableContainer.removeEventListener('dragover', handleFieldDragOver);
+        sortableContainer.removeEventListener('drop', handleFieldDrop);
+        sortableContainer.removeEventListener('dragend', handleFieldDragEnd);
+        
+        // Add event listeners using delegation
+        sortableContainer.addEventListener('dragstart', handleFieldDragStart);
+        sortableContainer.addEventListener('dragover', handleFieldDragOver);
+        sortableContainer.addEventListener('drop', handleFieldDrop);
+        sortableContainer.addEventListener('dragend', handleFieldDragEnd);
+        
+        // Verify draggable items
+        const draggableItems = sortableContainer.querySelectorAll('.sortable-field-item');
+        console.log(`Found ${draggableItems.length} draggable field items`);
     }
 
-    function handleDragStart(e) {
-        e.target.classList.add('dragging');
-        e.dataTransfer.setData('text/plain', e.target.dataset.fieldId);
+    function handleFieldDragStart(e) {
+        const item = e.target.closest('.sortable-field-item');
+        if (!item) return;
+        
+        console.log('Field drag started:', item.dataset.fieldId);
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', item.dataset.fieldId);
     }
 
-    function handleDragOver(e) {
+    function handleFieldDragOver(e) {
         e.preventDefault();
-    }
-
-    function handleDrop(e) {
-        e.preventDefault();
-        const draggedId = e.dataTransfer.getData('text/plain');
-        const draggedElement = document.querySelector(`[data-field-id="${draggedId}"]`);
+        e.dataTransfer.dropEffect = 'move';
+        
+        const draggedElement = document.querySelector('.sortable-field-item.dragging');
+        if (!draggedElement) return;
+        
         const targetElement = e.target.closest('.sortable-field-item');
+        if (!targetElement || targetElement === draggedElement) return;
         
-        if (draggedElement && targetElement && draggedElement !== targetElement) {
-            const container = targetElement.parentNode;
-            const targetIndex = Array.from(container.children).indexOf(targetElement);
-            const draggedIndex = Array.from(container.children).indexOf(draggedElement);
-            
-            if (draggedIndex < targetIndex) {
-                container.insertBefore(draggedElement, targetElement.nextSibling);
-            } else {
-                container.insertBefore(draggedElement, targetElement);
-            }
+        const container = targetElement.parentNode;
+        const afterElement = getFieldAfterElement(container, e.clientY);
+        
+        if (afterElement == null) {
+            container.appendChild(draggedElement);
+        } else {
+            container.insertBefore(draggedElement, afterElement);
         }
     }
 
-    function handleDragEnd(e) {
-        e.target.classList.remove('dragging');
+    function handleFieldDrop(e) {
+        e.preventDefault();
+        // The reordering is already handled in dragover
+    }
+
+    function handleFieldDragEnd(e) {
+        const item = e.target.closest('.sortable-field-item');
+        if (item) {
+            item.classList.remove('dragging');
+        }
+    }
+    
+    function getFieldAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.sortable-field-item:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     async function handleAddField(event) {
@@ -1306,6 +1356,13 @@ document.addEventListener('DOMContentLoaded', function() {
             index + 1
         ]);
 
+        console.log('Saving field order:', fieldOrders);
+
+        if (fieldOrders.length === 0) {
+            alert('No fields to reorder.');
+            return;
+        }
+
         try {
             const response = await fetch('/api/form/config/reorder', {
                 method: 'POST',
@@ -1313,11 +1370,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ field_orders: fieldOrders })
             });
             const result = await response.json();
+            console.log('Field order response:', result);
+            
             if (!response.ok) throw new Error(result.error || 'Failed to reorder fields.');
             
             alert('Field order saved successfully!');
             openFormConfigModal(); // Refresh to show new order
         } catch (error) {
+            console.error('Error saving field order:', error);
             alert(`Could not save field order: ${error.message}`);
         }
     }
@@ -1547,100 +1607,106 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initializeSectionDragAndDrop() {
         const sortableContainer = document.getElementById('sortable-sections');
+        if (!sortableContainer) {
+            console.warn('sortable-sections container not found');
+            return;
+        }
+        
+        console.log('Initializing section drag and drop');
+        
+        // Remove existing event listeners to prevent duplicates
+        sortableContainer.removeEventListener('dragstart', handleSectionDragStart);
+        sortableContainer.removeEventListener('dragover', handleSectionDragOver);
+        sortableContainer.removeEventListener('drop', handleSectionDrop);
+        sortableContainer.removeEventListener('dragend', handleSectionDragEnd);
+        
+        // Add event listeners using delegation
+        sortableContainer.addEventListener('dragstart', handleSectionDragStart);
+        sortableContainer.addEventListener('dragover', handleSectionDragOver);
+        sortableContainer.addEventListener('drop', handleSectionDrop);
+        sortableContainer.addEventListener('dragend', handleSectionDragEnd);
+        
+        // Verify draggable items
+        const draggableItems = sortableContainer.querySelectorAll('.sortable-section-item');
+        console.log(`Found ${draggableItems.length} draggable section items`);
+    }
+    
+    function handleSectionDragStart(e) {
+        const item = e.target.closest('.sortable-section-item');
+        if (!item) return;
+        
+        console.log('Section drag started:', item.dataset.sectionName);
+        item.classList.add('dragging');
+        item.style.opacity = '0.5';
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', item.dataset.sectionName);
+    }
+    
+    function handleSectionDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        
+        const draggedElement = document.querySelector('.sortable-section-item.dragging');
+        if (!draggedElement) return;
+        
+        const targetElement = e.target.closest('.sortable-section-item');
+        if (!targetElement || targetElement === draggedElement) return;
+        
+        const container = targetElement.parentNode;
+        const afterElement = getSectionAfterElement(container, e.clientY);
+        
+        if (afterElement == null) {
+            container.appendChild(draggedElement);
+        } else {
+            container.insertBefore(draggedElement, afterElement);
+        }
+        
+        // Update order numbers immediately
+        updateSectionOrderNumbers();
+    }
+    
+    function handleSectionDrop(e) {
+        e.preventDefault();
+        // The reordering is already handled in dragover
+    }
+    
+    function handleSectionDragEnd(e) {
+        const item = e.target.closest('.sortable-section-item');
+        if (item) {
+            item.classList.remove('dragging');
+            item.style.opacity = '1';
+        }
+        
+        // Final update of order numbers
+        updateSectionOrderNumbers();
+    }
+    
+    function getSectionAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.sortable-section-item:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+    
+    function updateSectionOrderNumbers() {
+        const sortableContainer = document.getElementById('sortable-sections');
         if (!sortableContainer) return;
         
-        let draggedElement = null;
-        let placeholder = null;
-        
-        // Create placeholder element
-        function createPlaceholder() {
-            const div = document.createElement('div');
-            div.className = 'sortable-section-placeholder bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg p-3 opacity-50';
-            div.innerHTML = '<div class="text-center text-blue-500 text-sm">Drop here</div>';
-            return div;
-        }
-        
-        sortableContainer.addEventListener('dragstart', (e) => {
-            draggedElement = e.target.closest('.sortable-section-item');
-            if (draggedElement) {
-                draggedElement.classList.add('dragging');
-                draggedElement.style.opacity = '0.5';
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/html', draggedElement.outerHTML);
-                
-                // Create and insert placeholder
-                placeholder = createPlaceholder();
-                draggedElement.parentNode.insertBefore(placeholder, draggedElement.nextSibling);
+        const items = sortableContainer.querySelectorAll('.sortable-section-item');
+        items.forEach((item, index) => {
+            const orderSpan = item.querySelector('.section-order-number');
+            if (orderSpan) {
+                orderSpan.textContent = `#${index + 1}`;
             }
         });
-        
-        sortableContainer.addEventListener('dragend', (e) => {
-            if (draggedElement) {
-                draggedElement.classList.remove('dragging');
-                draggedElement.style.opacity = '1';
-                
-                // Remove placeholder
-                if (placeholder && placeholder.parentNode) {
-                    placeholder.parentNode.removeChild(placeholder);
-                }
-                
-                draggedElement = null;
-                placeholder = null;
-                
-                // Update order numbers
-                updateSectionOrderNumbers();
-            }
-        });
-        
-        sortableContainer.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            
-            if (!draggedElement || !placeholder) return;
-            
-            const afterElement = getDragAfterElement(sortableContainer, e.clientY);
-            
-            if (afterElement == null) {
-                sortableContainer.appendChild(placeholder);
-            } else {
-                sortableContainer.insertBefore(placeholder, afterElement);
-            }
-        });
-        
-        sortableContainer.addEventListener('drop', (e) => {
-            e.preventDefault();
-            
-            if (draggedElement && placeholder) {
-                // Replace placeholder with dragged element
-                placeholder.parentNode.insertBefore(draggedElement, placeholder);
-                placeholder.parentNode.removeChild(placeholder);
-            }
-        });
-        
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.sortable-section-item:not(.dragging)')];
-            
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
-        }
-        
-        function updateSectionOrderNumbers() {
-            const items = sortableContainer.querySelectorAll('.sortable-section-item');
-            items.forEach((item, index) => {
-                const orderSpan = item.querySelector('.section-order-number');
-                if (orderSpan) {
-                    orderSpan.textContent = `#${index + 1}`;
-                }
-            });
-        }
     }
 
     function toggleOptionsContainer() {
